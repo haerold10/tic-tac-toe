@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #F0F8FF;
+        }
+        #start-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 50px;
+        }
+        #start-screen h1 {
+            font-size: 36px;
+            margin-bottom: 30px;
+        }
+        #start-screen label {
+            font-size: 18px;
+            margin-right: 10px;
+        }
+        #start-screen select,
+        #start-screen input {
+            font-size: 18px;
+            padding: 5px 10px;
+        }
+        #start-screen button {
+            font-size: 18px;
+            padding: 10px 20px;
+            margin-top: 30px;
+            cursor: pointer;
+        }
+        #board {
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        td {
+            border: 1px solid black;
+            width: 50px;
+            height: 50px;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 24px;
+            transition: background-color 0.5s;
+        }
+        td:hover {
+            background-color: lightblue;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="start-screen">
+        <h1>Tic-Tac-Toe</h1>
+        <label for="difficulty">Select difficulty:</label>
+        <select id="difficulty">
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+        </select><br><br>
+        <label for="size">Select board size:</label>
+        <input type="number" id="size" min="3" max="10" value="3"><br><br>
+        <button id="start-game">Start Game</button>
+    </div>
+
+    <table id="board"></table>
+
+    <script>
+        let board = [];
+        let currentPlayer = 'X';
+        let size = 3;
+        let difficulty = 'easy';
+
+        function checkWinner() {
+            // Check rows
+            for (let i = 0; i < size; i++) {
+                if (board[i].every(cell => cell === currentPlayer)) {
+                    return true;
+                }
+            }
+
+            // Check columns
+            for (let i = 0; i < size; i++) {
+                if (board.every(row => row[i] === currentPlayer)) {
+                    return true;
+                }
+            }
+
+            // Check diagonals
+            if (board.every((row, i) => row[i] === currentPlayer)) {
+                return true;
+            }
+            if (board.every((row, i) => row[size - i - 1] === currentPlayer)) {
+                return true;
+            }
+
+            return false;
+        }
+
+        function makeMove(e) {
+            let cell = e.target;
+            let row = cell.parentElement.rowIndex;
+            let col = cell.cellIndex;
+
+            if (board[row][col] !== '') {
+                return;
+            }
+
+            board[row][col] = currentPlayer;
+            cell.textContent = currentPlayer;
+
+            if (checkWinner()) {
+                alert(currentPlayer + ' wins!');
+                location.reload();
+                return;
+            }
+
+            currentPlayer = (currentPlayer === 'X') ? 'O' : 'X';
+
+            // Computer makes move
+            if (currentPlayer === 'O') {
+                setTimeout(makeComputerMove, 1000);
+            }
+        }
+
+        function makeComputerMove() {
+            let emptyCells = [];
+            for (let i = 0; i < size; i++) {
+                for (let j = 0; j < size; j++) {
+                    if (board[i][j] === '') {
+                        emptyCells.push([i, j]);
+                    }
+                }
+            }
+
+            if (emptyCells.length === 0) {
+                alert('Draw!');
+                location.reload();
+                return;
+            }
+
+            let move;
+            if (difficulty === 'easy') {
+                move = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+            } else if (difficulty === 'medium') {
+                move = getBestMove(emptyCells, 1);
+            } else {
+                move = getBestMove(emptyCells, emptyCells.length);
+            }
+
+            let row = move[0];
+            let col = move[1];
+            board[row][col] = currentPlayer;
+            let cell = document.querySelector();
+            cell.textContent = currentPlayer;
+
+        if (checkWinner()) {
+            alert(currentPlayer + ' wins!');
+            location.reload();
+            return;
+        }
+
+        currentPlayer = (currentPlayer === 'X') ? 'O' : 'X';
+    }
+
+    function getBestMove(emptyCells, depth) {
+        let bestScore = -Infinity;
+        let bestMove;
+
+        for (let i = 0; i < emptyCells.length; i++) {
+            let row = emptyCells[i][0];
+            let col = emptyCells[i][1];
+            board[row][col] = currentPlayer;
+            let score = minimax(emptyCells, depth - 1, -Infinity, Infinity, false);
+            board[row][col] = '';
+            if (score > bestScore) {
+                bestScore = score;
+                bestMove = [row, col];
+            }
+        }
+
+        return bestMove;
+    }
+
+    function minimax(emptyCells, depth, alpha, beta, isMaximizing) {
+        if (checkWinner()) {
+            return (isMaximizing) ? -1 : 1;
+        }
+        if (depth === 0 || emptyCells.length === 0) {
+            return 0;
+        }
+
+        if (isMaximizing) {
+            let bestScore = -Infinity;
+            for (let i = 0; i < emptyCells.length; i++) {
+                let row = emptyCells[i][0];
+                let col = emptyCells[i][1];
+                board[row][col] = currentPlayer;
+                let score = minimax(emptyCells, depth - 1, alpha, beta, false);
+                board[row][col] = '';
+                bestScore = Math.max(score, bestScore);
+                alpha = Math.max(alpha, score);
+                if (beta <= alpha) {
+                    break;
+                }
+            }
+            return bestScore;
+        } else {
+            let bestScore = Infinity;
+            for (let i = 0; i < emptyCells.length; i++) {
+                let row = emptyCells[i][0];
+                let col = emptyCells[i][1];
+                board[row][col] = currentPlayer;
+                let score = minimax(emptyCells, depth - 1, alpha, beta, true);
+                board[row][col] = '';
+                bestScore = Math.min(score, bestScore);
+                beta = Math.min(beta, score);
+                if (beta <= alpha) {
+                    break;
+                }
+            }
+            return bestScore;
+        }
+    }
+
+    function startGame() {
+        size = parseInt(document.querySelector('#size').value);
+        difficulty = document.querySelector('#difficulty').value;
+
+        // Initialize board
+        for (let i = 0; i < size; i++) {
+            board.push([]);
+            for (let j = 0; j < size; j++) {
+                board[i].push('');
+            }
+        }
+
+        // Create table
+        let tableHTML = '';
+        for (let i = 0; i < size; i++) {
+            tableHTML += '<tr>';
+            for (let j = 0; j < size; j++) {
+                tableHTML += '<td></td>';
+            }
+            tableHTML += '</tr>';
+        }
+        document.querySelector('#board').innerHTML = tableHTML;
+
+        // Add event listeners
+        let cells = document.querySelectorAll('td');
+        for (let i = 0; i < cells.length; i++) {
+            cells[i].addEventListener('click', makeMove);
+        }
+
+        // Hide start screen
+        document.querySelector('#start-screen').style.display = 'none';
+    }
+
+    document.querySelector('#start-game').addEventListener('click', startGame);
+</script>
